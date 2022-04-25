@@ -1,8 +1,10 @@
-data
 .vscode
-.settings
 *.json
+*.zip
 __pycache__
 *.db
 *.DS_Store
 *.png
+data
+preprocessing
+transcription
