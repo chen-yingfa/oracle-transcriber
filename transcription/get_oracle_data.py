@@ -4,18 +4,16 @@ import random
 
 from tqdm import tqdm
 
-name = '7104'
-src_dir = Path('../preprocessing/data/', name)
-dst_dir = Path('datasets', name)
+src_dir = Path('../preprocessing/data/220413/individuals')
+dst_dir = Path('datasets/220413/individuals')
 
 def get_files(dir: Path):
     files = []
     for subdir in sorted(dir.glob('*')):
         for file in sorted(subdir.glob('*')):
-            files.append(file)
+            if file.name.endswith('r.png'):
+                files.append(file)
     return files
-
-src_dir /= 'oracle2transcription'
 
 print(f"Getting files from {src_dir}")
 
@@ -27,6 +25,7 @@ print(f'Found {len(src_files)} files')
 # Split into train, dev, test
 test_size = int(0.02 * len(src_files))
 dev_size = int(0.02 * len(src_files))
+
 test_files = src_files[:test_size]
 dev_files = src_files[test_size:test_size + dev_size]
 train_files = src_files[test_size + dev_size:]
@@ -42,8 +41,12 @@ test_dir.mkdir(exist_ok=True, parents=True)
 
 def copyfiles(files, dst_dir):
     for file in tqdm(files):
-        dst_file = dst_dir / f'{file.parent.name}_{file.name}'
-        copyfile(file, dst_file)
+        dst_file_r = dst_dir / file.name
+        copyfile(file, dst_file_r)
+        # Copy transcription file
+        file_t = file.parent / file.name.replace('r.png', 't.png')
+        dst_file_t = dst_dir / file_t.name
+        copyfile(file_t, dst_file_t)
 
 print(f'Copying to {test_dir}')
 copyfiles(test_files, test_dir)

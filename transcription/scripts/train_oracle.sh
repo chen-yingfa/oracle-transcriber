@@ -1,9 +1,11 @@
 set -ex
 
-data_name="7104"
-name="${data_name}_noinv"
-data_dir="./datasets/${data_name}"
-out_dir="result/temp_${name}"
+da_replace_prob="0.8"
+da_mask_prob="0"
+name="220413_replace${da_replace_prob}"
+data_dir="./datasets/220413/individuals"
+
+out_dir="results/${name}"
 
 pyargs=" -W ignore "
 
@@ -27,6 +29,7 @@ cmd="python3 ${pyargs} train.py \
 --n_epochs 160 \
 --n_epochs_decay 160 \
 --save_epoch_freq 40 \
+--da_replace_prob ${da_replace_prob} \
 "
 
 

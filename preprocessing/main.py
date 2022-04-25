@@ -20,16 +20,13 @@ ie. pair of images for each glyph, but {glyph_dir.name} has {len(img_files)} ima
             yield img_files[i], img_files[i+1]
             
             
-def save_pair(transcript, rubbing, dst_glyph_dir, fname, do_align=False):
-    
-    if align:
-        transcript = align.align_transcript_to_rubbing(rubbing, transcript)
+def save_pair(transcript, rubbing, dst_glyph_dir, fname):
     pair = utils.concat_images([rubbing, transcript], hor=True)
     pair_file = dst_glyph_dir / (fname + '.png')
     pair.save(pair_file)
 
 
-def save_files(transcript, rubbing, dst_glyph_dir, pref, do_align=False):
+def save_files(transcript, rubbing, dst_glyph_dir, pref):
     fname_t = pref + '_t.png'
     fname_r = pref + '_r.png'
     transcript.save(dst_glyph_dir / fname_t)
@@ -37,9 +34,10 @@ def save_files(transcript, rubbing, dst_glyph_dir, pref, do_align=False):
 
 
 def main():
+    do_align = False
     data_path = Path(DATA_DIR)
     name = '220413'
-    dst_dir = Path('data', name, 'individuals')
+    dst_dir = Path('data', name, 'pairs')
     target_shape = (96, 96)
     
     print(f'Loading from {data_path}')
@@ -56,11 +54,9 @@ def main():
         glyph = transcript_file.name[0]
         
         # Preprocess
-        pad_transcript = 6
-        
         transcript = utils.open_img(transcript_file)
-        transcript = utils.process_transcript(transcript)
-        transcript = utils.pad(transcript, pad_transcript)
+        transcript = utils.process_transcript(transcript, crop_black_edges=do_align)
+        # transcript = utils.pad(transcript, 0)
         transcript = utils.resize_and_pad(transcript, target_shape)
         # transcript.save('transcript.png')
         
@@ -68,12 +64,14 @@ def main():
         rubbing = utils.resize_and_pad(rubbing, target_shape)
         # rubbing.save('rubbing.png')
         
+        if do_align:
+            transcript = align.align_transcript_to_rubbing(rubbing, transcript)
         # Save
         dst_glyph_dir = dst_dir / glyph
         dst_glyph_dir.mkdir(exist_ok=True, parents=True)
         
-        save_files(transcript, rubbing, dst_glyph_dir, pref_t, do_align=False)
-        # save_pair(transcript, rubbing, dst_glyph_dir, pref_t, do_align=True)
+        # save_files(transcript, rubbing, dst_glyph_dir, pref_t)
+        save_pair(transcript, rubbing, dst_glyph_dir, pref_t)
     print('Done processing')
 
 if __name__ == '__main__':
