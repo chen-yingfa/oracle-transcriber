@@ -5,6 +5,12 @@ __pycache__
 *.db
 *.DS_Store
 *.png
+*.pyc
 data
-preprocessing
-transcription
+preprocessing/data
+preprocessing/handa-stats
+transcription/datasets
+transcription/result
+transcription/results
+transcription/imgs
+transcription/checkpoints
