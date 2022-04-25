@@ -40,42 +40,6 @@ def process_hanzi(hanzi: str) -> str:
         return hanzi
 
 
-def process_transcript(img: Image, bin_threshold: float=96) -> Image:
-    # Convert into solid black or white
-    def get_binary_arr(img: Image) -> np.array:
-        arr = utils.get_img_arr(img)
-        # print(arr[60:100, 16:32])
-        arr[arr >= bin_threshold] = 255
-        arr[arr < bin_threshold] = 0
-        return arr
-        
-    def add_stroke_padding(arr: np.array) -> np.array:
-        def in_bounds(i, j):
-            return 0 <= i < arr.shape[0] and 0 <= j < arr.shape[1]
-        radius = 4
-        for i in range(arr.shape[0]):
-            for j in range(arr.shape[1]):
-                if arr[i, j] == 255:
-                    # Check if a nearby pixel is black
-                    for di in range(1 - radius, radius):
-                        for dj in range(1 - radius, radius):
-                            x = i + di
-                            y = j + dj
-                            if in_bounds(x, y) and arr[x, y] == 0:
-                                arr[x, y] = 192
-                        
-        # print(arr[60:100, 16:32])
-        return arr
-    img = ImageOps.invert(img)
-    arr = get_binary_arr(img)
-    utils.set_img_arr(img, arr)
-    
-    # Remove padding
-    bbox = img.getbbox()
-    img = img.crop(bbox)
-    return img
-
-
 def gen_pairs(data_dir: Path):
     '''
     Takes 30 min
@@ -142,7 +106,7 @@ def gen_pairs_scy(output_dir):
         transcript_file = Path(PATH_TRANSCRIPT, transcript_file)
         
         transcript = utils.open_img(transcript_file)
-        transcript = process_transcript(transcript)
+        transcript = utils.process_transcript(transcript)
         paired_img = align.get_aligned_pair_image([noise_file], transcript)
         
         book_name = ocr_data.get_book_name(transcript_file.name)

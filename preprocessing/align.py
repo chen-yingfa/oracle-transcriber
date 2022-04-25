@@ -189,6 +189,14 @@ def align(orig: Image, transcript: Image) -> Tuple[int, int, int, int]:
     return match_box, match_t, match_dist
 
 
+def align_transcript_to_rubbing(rubbing: Image, transcript: Image) -> Image:
+    '''Assume that both transcript and rubbing have black background.'''
+    match_box, match_t, _= align(rubbing, transcript)
+    new_t = Image.new('L', rubbing.size, 0)
+    new_t.paste(match_t, (match_box[0], match_box[1]))
+    return new_t
+
+
 def get_best_match(orig_files: List[str], transcript: Image) -> tuple:
     '''
     Try aligning `transcript` on each originalt image, return the best match.
@@ -197,7 +205,7 @@ def get_best_match(orig_files: List[str], transcript: Image) -> tuple:
     best_t = None
     best_avg_val = None
     best_idx = None
-    transcript.save('transcript.png')
+    # transcript.save('transcript.png')
     for i, file_o in enumerate(orig_files):
         orig = utils.open_img(file_o)
         match_box, match_t, match_avg_val = align(orig, transcript)
@@ -228,10 +236,10 @@ def get_best_aligned_transcript(orig_files: list, transcript: Image) -> Image:
     new_t = Image.new('L', (w_o, h_o))
     new_t.putdata(list(new_arr_t.flatten()))
     
-    # Draw match box
-    draw = ImageDraw.Draw(orig)
-    draw.rectangle((match_box[0], match_box[1], match_box[2], match_box[3]), outline='gray')
-    orig.save('result/match.png')
+    # # Draw match box
+    # draw = ImageDraw.Draw(orig)
+    # draw.rectangle((match_box[0], match_box[1], match_box[2], match_box[3]), outline='gray')
+    # orig.save('result/match.png')
     return best_idx, new_t
 
     
@@ -254,22 +262,13 @@ def get_aligned_transcript(orig: Image, transcript: Image) -> Image:
     return new_t
 
 
-def get_aligned_pair_image(
-        orig_files: List[str], 
-        # transcript_file: str,
-        transcript: Image,
-        ) -> Image:
+def get_aligned_pair_image(orig_files: List[str], transcript: Image) -> Image:
     '''
     Given a transcription and multiple original images, find the best match,
     return them concatenated horizontally.
     '''
     # transcript = utils.open_img(transcript_file)
     idx, aligned_t = get_best_aligned_transcript(orig_files, transcript)
-    
-    # # Remove stroke padding
-    # arr_t = utils.get_img_arr(aligned_t)
-    # arr_t[np.abs(arr_t - 192) < 60] = 0
-    # utils.set_img_arr(aligned_t, arr_t)
     
     orig = utils.open_img(orig_files[idx])
     joined = utils.concat_images([orig, aligned_t], hor=True)
