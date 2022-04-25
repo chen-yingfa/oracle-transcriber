@@ -85,10 +85,7 @@ def process_transcript(img: Image,
     binarize(img)
     
     if crop_black_edges:
-        # Remove padding
-        bbox = img.getbbox()
-        img = img.crop(bbox)
-    # img = ImageOps.invert(img)
+        img = img.crop(img.getbbox())
     return img
 
 
