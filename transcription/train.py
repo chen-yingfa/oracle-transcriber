@@ -14,8 +14,6 @@ Example:
         python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
     Train a CycleGAN model:
         python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
-
-See options/base_options.py and options/train_options.py for more training options.
 """
 import time
 from options.train_options import TrainOptions
