@@ -1,10 +1,13 @@
 set -ex
 
 # data_name="rubbing_531_white"
-data_dir="./datasets/7104"
-name="7104_noinv"
+data_dir="./datasets/220413/individuals"
+name="220413_aligned"
+name="220413_replace0_mask1"
+name="220413_replace0.4_mask0"
+name="220413_replace0.8_mask0"
 # out_dir="result/${name}_rubbing"
-out_dir="result/7104"
+out_dir="test_result/${name}"
 
 cmd="python3 test.py \
 --dataroot ${data_dir} \

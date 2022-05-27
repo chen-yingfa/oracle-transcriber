@@ -1,8 +1,8 @@
 set -ex
 
-da_replace_prob="0.8"
+da_replace_prob="0.4"
 da_mask_prob="0"
-name="220413_replace${da_replace_prob}"
+name="220413_replace${da_replace_prob}_mask${da_mask_prob}"
 data_dir="./datasets/220413/individuals"
 
 out_dir="results/${name}"
@@ -30,6 +30,7 @@ cmd="python3 ${pyargs} train.py \
 --n_epochs_decay 160 \
 --save_epoch_freq 40 \
 --da_replace_prob ${da_replace_prob} \
+--da_mask_prob ${da_mask_prob} \
 "
 
 

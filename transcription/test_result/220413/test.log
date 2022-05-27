@@ -1,0 +1,99 @@
+----------------- Options ---------------
+             aspect_ratio: 1.0                           
+               batch_size: 128                           	[default: 1]
+          checkpoints_dir: ./checkpoints                 
+                crop_size: 128                           	[default: 256]
+                 dataroot: ./datasets/220413/individuals 	[default: None]
+             dataset_mode: aligned                       
+                direction: AtoB                          
+          display_winsize: 128                           	[default: 256]
+                    epoch: latest                        
+                     eval: False                         
+                  gpu_ids: -1                            
+                init_gain: 0.02                          
+                init_type: normal                        
+                 input_nc: 1                             	[default: 3]
+                  isTrain: False                         	[default: None]
+                load_iter: 0                             	[default: 0]
+                load_size: 128                           	[default: 256]
+         max_dataset_size: inf                           
+                    model: pix2pix                       	[default: test]
+               n_layers_D: 3                             
+                     name: 220413                        	[default: experiment_name]
+                      ndf: 64                            
+                     netD: basic                         
+                     netG: unet_128                      	[default: unet_256]
+                      ngf: 64                            
+               no_dropout: False                         
+                  no_flip: False                         
+                     norm: batch                         
+                 num_test: 50                            
+              num_threads: 4                             
+                output_nc: 1                             	[default: 3]
+                    phase: test                          
+               preprocess: resize_and_crop               
+            random_invert: False                         
+              results_dir: ./results/                    
+           serial_batches: False                         
+                   suffix:                               
+                use_wandb: False                         
+                  verbose: False                         
+----------------- End -------------------
+dataset [AlignedDataset] was created
+initialize network with normal
+model [Pix2PixModel] was created
+loading the model from ./checkpoints/220413/latest_net_G.pth
+---------- Networks initialized -------------
+[Network G] Total number of parameters : 41.823 M
+-----------------------------------------------
+creating web directory ./results/220413/test_latest
+processing (0000)-th image... ['./datasets/220413/individuals/test/㫃_01306_r.png']
+processing (0001)-th image... ['./datasets/220413/individuals/test/䢔_04257_r.png']
+processing (0002)-th image... ['./datasets/220413/individuals/test/不_03344_r.png']
+processing (0003)-th image... ['./datasets/220413/individuals/test/不_05827_r.png']
+processing (0004)-th image... ['./datasets/220413/individuals/test/不_06412_r.png']
+processing (0005)-th image... ['./datasets/220413/individuals/test/乍_04957_r.png']
+processing (0006)-th image... ['./datasets/220413/individuals/test/亞_05430_r.png']
+processing (0007)-th image... ['./datasets/220413/individuals/test/今_03127_r.png']
+processing (0008)-th image... ['./datasets/220413/individuals/test/伐_00641_r.png']
+processing (0009)-th image... ['./datasets/220413/individuals/test/伐_01537_r.png']
+processing (0010)-th image... ['./datasets/220413/individuals/test/伐_04878_r.png']
+processing (0011)-th image... ['./datasets/220413/individuals/test/休_06173_r.png']
+processing (0012)-th image... ['./datasets/220413/individuals/test/兄_01026_r.png']
+processing (0013)-th image... ['./datasets/220413/individuals/test/先_01547_r.png']
+processing (0014)-th image... ['./datasets/220413/individuals/test/先_04064_r.png']
+processing (0015)-th image... ['./datasets/220413/individuals/test/先_04946_r.png']
+processing (0016)-th image... ['./datasets/220413/individuals/test/先_05883_r.png']
+processing (0017)-th image... ['./datasets/220413/individuals/test/克_02715_r.png']
+processing (0018)-th image... ['./datasets/220413/individuals/test/出_00258_r.png']
+processing (0019)-th image... ['./datasets/220413/individuals/test/出_00457_r.png']
+processing (0020)-th image... ['./datasets/220413/individuals/test/勿_04774_r.png']
+processing (0021)-th image... ['./datasets/220413/individuals/test/區_06587_r.png']
+processing (0022)-th image... ['./datasets/220413/individuals/test/午_03320_r.png']
+processing (0023)-th image... ['./datasets/220413/individuals/test/南_05263_r.png']
+processing (0024)-th image... ['./datasets/220413/individuals/test/南_07271_r.png']
+processing (0025)-th image... ['./datasets/220413/individuals/test/即_04122_r.png']
+processing (0026)-th image... ['./datasets/220413/individuals/test/叀_03693_r.png']
+processing (0027)-th image... ['./datasets/220413/individuals/test/叀_04589_r.png']
+processing (0028)-th image... ['./datasets/220413/individuals/test/叀_06031_r.png']
+processing (0029)-th image... ['./datasets/220413/individuals/test/史_04607_r.png']
+processing (0030)-th image... ['./datasets/220413/individuals/test/史_05549_r.png']
+processing (0031)-th image... ['./datasets/220413/individuals/test/史_07228_r.png']
+processing (0032)-th image... ['./datasets/220413/individuals/test/各_07392_r.png']
+processing (0033)-th image... ['./datasets/220413/individuals/test/告_00470_r.png']
+processing (0034)-th image... ['./datasets/220413/individuals/test/告_04999_r.png']
+processing (0035)-th image... ['./datasets/220413/individuals/test/告_06528_r.png']
+processing (0036)-th image... ['./datasets/220413/individuals/test/土_01938_r.png']
+processing (0037)-th image... ['./datasets/220413/individuals/test/執_00550_r.png']
+processing (0038)-th image... ['./datasets/220413/individuals/test/夕_04304_r.png']
+processing (0039)-th image... ['./datasets/220413/individuals/test/夕_06230_r.png']
+processing (0040)-th image... ['./datasets/220413/individuals/test/大_06459_r.png']
+processing (0041)-th image... ['./datasets/220413/individuals/test/夫_02038_r.png']
+processing (0042)-th image... ['./datasets/220413/individuals/test/夫_07702_r.png']
+processing (0043)-th image... ['./datasets/220413/individuals/test/奏_01731_r.png']
+processing (0044)-th image... ['./datasets/220413/individuals/test/奠_02743_r.png']
+processing (0045)-th image... ['./datasets/220413/individuals/test/好_01004_r.png']
+processing (0046)-th image... ['./datasets/220413/individuals/test/子_03066_r.png']
+processing (0047)-th image... ['./datasets/220413/individuals/test/季_03363_r.png']
+processing (0048)-th image... ['./datasets/220413/individuals/test/孽_01163_r.png']
+processing (0049)-th image... ['./datasets/220413/individuals/test/它_01275_r.png']

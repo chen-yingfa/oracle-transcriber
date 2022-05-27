@@ -37,5 +37,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
 
         parser.add_argument('--da_replace_prob', type=float, default=0.0, help='Probability of using "Replace" data augmentation method.')
+        parser.add_argument('--da_mask_prob', type=float, default=0.0, help='Probability of using "Mask" data augmentation method.')
         self.isTrain = True
         return parser

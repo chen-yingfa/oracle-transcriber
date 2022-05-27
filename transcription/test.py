@@ -33,6 +33,10 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 
+import random
+import numpy as np
+import torch
+
 try:
     import wandb
 except ImportError:
@@ -40,6 +44,10 @@ except ImportError:
 
 
 if __name__ == '__main__':
+    random.seed(0)
+    np.random.seed(0)
+    torch.random.manual_seed(0)
+    
     opt = TestOptions().parse()  # get test options
     # hard-code some parameters for test
     opt.num_threads = 0   # test code only supports num_threads = 0
