@@ -1,6 +1,7 @@
 import time
 from typing import Tuple, List
 from pathlib import Path
+from tqdm import tqdm
 
 from PIL import Image, ImageOps, ImageDraw
 import numpy as np
@@ -190,7 +191,10 @@ def align(orig: Image, transcript: Image) -> Tuple[int, int, int, int]:
 
 
 def align_transcript_to_rubbing(rubbing: Image, transcript: Image) -> Image:
-    '''Assume that both transcript and rubbing have black background.'''
+    '''
+    Assume that both transcript and rubbing have black background.
+    Return new image of aligned transcript
+    '''
     match_box, match_t, _= align(rubbing, transcript)
     new_t = Image.new('L', rubbing.size, 0)
     new_t.paste(match_t, (match_box[0], match_box[1]))
@@ -276,19 +280,45 @@ def get_aligned_pair_image(orig_files: List[str], transcript: Image) -> Image:
 
 
 if __name__ == '__main__':
+    files = []
+    src_dir = Path('../transcription/datasets/220413/individuals')
+    dst_dir = Path('../transcription/datasets/220413/individuals_aligned')
+    for t in [
+        # 'dev', 
+        # 'test', 
+        'train',
+        ]:
+        subdir = src_dir / t
+        dst_subdir = dst_dir / t
+        dst_subdir.mkdir(exist_ok=True, parents=True)
+        files = sorted(subdir.glob('*.png'))
+        for i in tqdm(range(0, len(files), 2)):
+            rfile = files[i]
+            tfile = files[i+1]
+            rubbing = Image.open(rfile).convert('L')
+            transcript = Image.open(tfile).convert('L')
+            transcript = align_transcript_to_rubbing(rubbing, transcript)
+            
+            t_dst = dst_dir / t / tfile.name
+            r_dst = dst_dir / t / rfile.name
+            transcript.save(t_dst)
+            rubbing.save(r_dst)
+        exit()
+    
+    
     # transcript_path = '../data/ocr/00037/甲骨文字编（上）_cut_001_3_0_1_人_00037(A7).png'
-    transcript_path = Path('../data/transcript_processed/00001/甲骨文字编（上）_cut_001_2_2_1_人_00001(A7).png')
-    orig_path = 'H00001-1-5.png'
+    # transcript_path = Path('../data/transcript_processed/00001/甲骨文字编（上）_cut_001_2_2_1_人_00001(A7).png')
+    # orig_path = 'H00001-1-5.png'
 
-    orig = utils.open_img(orig_path)
-    transcript = utils.open_img(transcript_path)
-    transcript.save('result/transcript.png')
-    orig.save('result/orig.png')
+    # orig = utils.open_img(orig_path)
+    # transcript = utils.open_img(transcript_path)
+    # transcript.save('result/transcript.png')
+    # orig.save('result/orig.png')
     
-    start_time = time.time()
-    aligned = get_aligned_transcript(orig, transcript)
-    time_elapsed = time.time() - start_time
-    joined = utils.concat_images([orig, aligned], hor=True)
-    joined.save('result/joined.png')
+    # start_time = time.time()
+    # aligned = get_aligned_transcript(orig, transcript)
+    # time_elapsed = time.time() - start_time
+    # joined = utils.concat_images([orig, aligned], hor=True)
+    # joined.save('result/joined.png')
     
-    print('Time elapsed: {:.2f}s'.format(time_elapsed))
+    # print('Time elapsed: {:.2f}s'.format(time_elapsed))
