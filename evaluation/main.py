@@ -12,9 +12,9 @@ if __name__ == '__main__':
         # '220413_replace0.8_mask0',
         # '220413_aligned',
         # '220413',
-        '220413_aligned_replace0_hmask0.8_smask0',
-        '220413_aligned_replace0_hmask0.8_smask0.4',
-        '220413_aligned_replace0_hmask0.8_smask0.8',
+        # '220413_aligned_replace0_hmask0.8_smask0',
+        # '220413_aligned_replace0_hmask0.8_smask0.4',
+        # '220413_aligned_replace0_hmask0.8_smask0.8',
     ]
 
     for test_name in test_names:

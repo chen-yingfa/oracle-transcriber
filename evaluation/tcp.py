@@ -138,7 +138,7 @@ def get_transcribed_data(test_name: str):
 
 
 def load_best_ckpt(model, output_dir):
-    print(f'Loading best model from {output_dir} by dev loss...')
+    # print(f'Loading best model from {output_dir} by dev loss...')
     min_loss = float('inf')
     best_ckpt_dir = None
     for ckpt_dir in output_dir.glob('checkpoint-*'):
@@ -148,7 +148,7 @@ def load_best_ckpt(model, output_dir):
             min_loss = result['loss']
             best_ckpt_dir = ckpt_dir
     # best_ckpt_dir = output_dir / 'checkpoint-9'
-    print(f'Loading from {best_ckpt_dir}')
+    # print(f'Loading from {best_ckpt_dir}')
     model.load_state_dict(torch.load(best_ckpt_dir / 'ckpt.pt'))
 
 
@@ -178,8 +178,8 @@ def test(model, test_data, output_dir: Path, test_name: str):
 
 
 def get_transcription_tcp(test_name):
-    output_dir = Path('result/translation_classifier_tinycnn')
-    model = Classifier(2, input_filters=16).cuda()
+    output_dir = Path('result/pair_cnn64/0.002')
+    model = Classifier(2, input_filters=64).cuda()
     load_best_ckpt(model, output_dir)
     test_data = get_transcribed_data(test_name)
     return test(model, test_data, output_dir, test_name=test_name)
@@ -193,22 +193,22 @@ def test_rt7381(model, output_dir):
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-    data_dir = Path('../transcription/datasets/220413/individuals_aligned')
-    output_dir = Path('result/translation_classifier_cnn64')
+    data_dir = Path('../transcription/datasets/rt7381/individuals_aligned_90')
+    output_dir = Path('result/pair_cnn64')
 
     # model = CPair().cuda()
-    for lr in [5e-4, 1e-3, 2e-3]:
+    for lr in [5e-3]:
         print('Getting model')
         model = Classifier(2, input_filters=64).cuda()
         print('# params:', get_param_count(model))
         this_output_dir = output_dir / str(lr)
-        # train(
-        #     model, 
-        #     data_dir, 
-        #     this_output_dir,
-        #     lr=lr,
-        #     num_epochs=6,
-        #     )
+        train(
+            model, 
+            data_dir, 
+            this_output_dir,
+            lr=lr,
+            num_epochs=8,
+            )
         load_best_ckpt(model, this_output_dir)
         test_rt7381(model, this_output_dir)
     exit()

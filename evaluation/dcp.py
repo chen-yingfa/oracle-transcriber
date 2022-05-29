@@ -119,7 +119,7 @@ def train(
         print('*** Start Evaluation ***')
         result = evaluate(model, dev_data, batch_size=batch_size)
         result['train_loss'] = total_loss / len(train_dataloader)
-        print({k: result[k] for k in ['loss', 'acc', 'preds']})
+        print({k: result[k] for k in ['loss', 'acc']})
         
         # Save checkpoint
         ckpt_dir = output_dir / f'checkpoint-{ep}'
@@ -140,7 +140,7 @@ def load_best_ckpt(model, output_dir: Path):
             min_loss = result['loss']
             best_ckpt_dir = ckpt_dir
     
-    print(f'Loading from {best_ckpt_dir}')
+    # print(f'Loading from {best_ckpt_dir}')
     model.load_state_dict(torch.load(best_ckpt_dir / 'ckpt.pt'))
 
 
@@ -186,10 +186,10 @@ def test(model, test_data: Path, output_dir: Path, test_name: str):
 
 def get_transcription_dcp(test_name):
     # print('Getting model')
-    model = Classifier(1).cuda()
+    model = Classifier(1, input_filters=16).cuda()
     # print(f'# params: {get_param_count(model)}')
     
-    output_dir = Path('result/domain_classifier_tinycnn_1')
+    output_dir = Path('result/domain_cnn16/0.001')
     load_best_ckpt(model, output_dir)
     
     test_data = get_transcribed_data(test_name)
@@ -200,23 +200,26 @@ if __name__ == '__main__':
     torch.manual_seed(0)
     print('Getting model')
 
-    data_dir = Path('../transcription/datasets/220413/individuals_aligned_90')
+    data_dir = Path('../transcription/datasets/rt7381/individuals_aligned_90')
     # output_dir = Path('result/domain_classifier_mobilenetv2')
-    output_dir = Path('result/domain_classifier_cnn')
+    output_dir = Path('result/domain_cnn16')
     # output_dir = Path('result/c_domain')
 
     lr = 5e-4
     lr_decay = 0.9
 
-    model = Classifier(1).cuda()
-    print(f'# params: {get_param_count(model)}')
-    train(
-        model, data_dir, output_dir,
-        num_epochs=6,
-        batch_size=512,
-        start_lr=lr,
-        lr_decay=lr_decay,
-    )
-    load_best_ckpt(model, output_dir)    
-    test_rt7381(model, output_dir)
+    for lr in [1e-4, 2e-4, 5e-4, 1e-3]:
+        model = Classifier(1, input_filters=16).cuda()
+        print(f'# params: {get_param_count(model)}')
+        test_dir = output_dir / str(lr)
+        train(
+            model, data_dir,
+            output_dir=test_dir,
+            num_epochs=6,
+            batch_size=512,
+            start_lr=lr,
+            lr_decay=lr_decay,
+        )
+        load_best_ckpt(model, test_dir)    
+        test_rt7381(model, test_dir)
     
