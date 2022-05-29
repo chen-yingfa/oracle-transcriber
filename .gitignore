@@ -16,3 +16,5 @@ transcription/imgs
 transcription/checkpoints
 
 evaluation/result
+
+plot/*.png

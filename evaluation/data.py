@@ -10,24 +10,26 @@ class DomainData(Dataset):
     def __init__(self, data_dir: Path, phase: str, num_examples=None, img_paths=None):
         if phase == 'train':
             self.augmentation = transforms.Compose([
-                transforms.Resize(96),
-                transforms.RandomCrop(84),
+                # transforms.Resize(96),
+                # transforms.RandomCrop(84),
+                transforms.Resize(76),
+                transforms.RandomCrop(64),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225],
-                ),
+                # transforms.Normalize(
+                #     [0.485, 0.456, 0.406],
+                #     [0.229, 0.224, 0.225],
+                # ),
             ])
         else:
             self.augmentation = transforms.Compose([
-                transforms.Resize(84),
+                transforms.Resize(64),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225],
-                ),
+                # transforms.Normalize(
+                #     [0.485, 0.456, 0.406],
+                #     [0.229, 0.224, 0.225],
+                # ),
             ])
         
         self.phase = phase
@@ -35,7 +37,7 @@ class DomainData(Dataset):
             self.img_paths = img_paths
         else:
             self.img_paths = self.get_img_paths(data_dir)[:num_examples]
-        print(f'Got {len(self.img_paths)} images')
+        # print(f'Got {len(self.img_paths)} images')
     
     def get_img_paths(self, data_dir: Path):
         '''
@@ -56,9 +58,13 @@ class DomainData(Dataset):
     
     def __getitem__(self, idx: int) -> dict:
         path = self.img_paths[idx % len(self.img_paths)]
-        label = 1 if path.name.split('.')[0][-1] == 't' else 0
+        if self.phase in ['train', 'dev']:
+            label = 1 if path.name.split('.')[0][-1] == 't' else 0
+        else:
+            label = 1
+        # label = 1 if path.name.split('.')[0][-1] == 't' else 0
         
-        img = Image.open(path).convert('RGB')
+        img = Image.open(path).convert('L')
         img = self.augmentation(img)
         return {
             'img': img,
@@ -73,24 +79,25 @@ class PairData(Dataset):
     def __init__(self, data_dir: Path, phase: str, num_examples=None, img_paths=None):
         if phase == 'train':
             self.augmentation = transforms.Compose([
-                transforms.Resize(96),
+                transforms.Resize(64),
+                # transforms.Resize(96),
                 # transforms.RandomCrop(84),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225],
-                ),
+                # transforms.Normalize(
+                #     [0.485, 0.456, 0.406],
+                #     [0.229, 0.224, 0.225],
+                # ),
             ])
         else:
             self.augmentation = transforms.Compose([
-                transforms.Resize(96),
+                transforms.Resize(64),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225],
-                ),
+                # transforms.Normalize(
+                #     [0.485, 0.456, 0.406],
+                #     [0.229, 0.224, 0.225],
+                # ),
             ])
         
         self.phase = phase
@@ -116,22 +123,22 @@ class PairData(Dataset):
         '''
         path_a = self.a_paths[idx % len(self.a_paths)]
         path_b = self.b_paths[idx % len(self.b_paths)]
-        img_a = Image.open(path_a).convert('RGB')
+        img_a = Image.open(path_a).convert('L')
         
-        if self.phase == 'train' or self.phase == 'dev':
+        if self.phase in ['train', 'dev']:
             if random.random() < 0.5:
                 # Return real pair
-                img_b = Image.open(path_b).convert('RGB')
+                img_b = Image.open(path_b).convert('L')
                 label = 1
             else:
                 # Return fake pair
                 new_path_b = random.choice(self.b_paths)
                 while new_path_b == path_b:
                     new_path_b = random.choice(self.b_paths)
-                img_b = Image.open(new_path_b).convert('RGB')
+                img_b = Image.open(new_path_b).convert('L')
                 label = 0
         else:
-            img_b = Image.open(path_b).convert('RGB')
+            img_b = Image.open(path_b).convert('L')
             label = 1
 
         # img_a.save(f'images/{idx}_a.png')

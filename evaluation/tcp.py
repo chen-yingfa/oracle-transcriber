@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import random
 
 from tqdm import tqdm
 import torch
@@ -8,7 +9,8 @@ from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader
 
 from data import PairData
-from model import CPair
+from utils import get_param_count
+from model import CPair, Classifier
 
 
 def get_acc(labels, preds):
@@ -32,7 +34,8 @@ def evaluate(model, dataset: Dataset, batch_size: int=64):
         img_a = batch['img_a'].cuda()
         img_b = batch['img_b'].cuda()
         label = batch['label'].cuda()
-        logits = model(img_a, img_b)
+        x = torch.cat((img_a, img_b), dim=1)
+        logits = model(x)
         loss = F.cross_entropy(logits, label)
         
         # Gather result
@@ -54,17 +57,25 @@ def evaluate(model, dataset: Dataset, batch_size: int=64):
     return result
 
     
-def train(model, data_dir: Path, output_dir: Path, num_epochs: int=10, batch_size: int=512, lr: float=1e-3):
+def train(
+    model, 
+    data_dir: Path, 
+    output_dir: Path, 
+    num_epochs: int=10, 
+    batch_size: int=512, 
+    lr: float=1e-3,
+    lr_decay: float=0.9,
+    ):
     print('Getting data...', flush=True)
     train_data = PairData(data_dir / 'train', 'train')
-    dev_data = PairData(data_dir / 'val', 'dev')
+    dev_data = PairData(data_dir / 'dev', 'dev')
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     
     # Optimizer and scheduler
     print('Preparing optimizer and scheduler...')
     num_opt_steps = len(train_dataloader)
     optimizer = Adam(model.parameters(), lr=lr)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=num_opt_steps // 2, gamma=0.95)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=num_opt_steps, gamma=lr_decay)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
     
     print('*** Start Training ***')
@@ -86,7 +97,8 @@ def train(model, data_dir: Path, output_dir: Path, num_epochs: int=10, batch_siz
             label = batch['label'].cuda()
             
             # Forward pass
-            output = model(img_a, img_b)
+            x = torch.cat((img_a, img_b), dim=1)
+            output = model(x)
             loss = F.cross_entropy(output, label)
             
             total_loss += loss.item()
@@ -113,8 +125,20 @@ def train(model, data_dir: Path, output_dir: Path, num_epochs: int=10, batch_siz
         json.dump(result, open(ckpt_dir / 'result.json', 'w'))
 
 
-def test(model, data_dir: Path, output_dir: Path, test_name: str):
-    print('Loading best model by dev loss...')
+def get_transcribed_data(test_name: str):
+    # Get img paths
+    gen_dir = Path(f'../transcription/results/{test_name}/test_latest/images')
+    # print(f'Loading test data from {gen_dir}')
+    b_paths = [img for img in gen_dir.glob('*fake_B.png')]
+    a_paths = [img for img in gen_dir.glob('*real_A.png')]
+    assert len(a_paths) == 147 and len(b_paths) == 147
+    test_data = PairData(
+        None, 'test', img_paths=(a_paths, b_paths))
+    return test_data
+
+
+def load_best_ckpt(model, output_dir):
+    print(f'Loading best model from {output_dir} by dev loss...')
     min_loss = float('inf')
     best_ckpt_dir = None
     for ckpt_dir in output_dir.glob('checkpoint-*'):
@@ -123,21 +147,15 @@ def test(model, data_dir: Path, output_dir: Path, test_name: str):
         if result['loss'] < min_loss:
             min_loss = result['loss']
             best_ckpt_dir = ckpt_dir
+    # best_ckpt_dir = output_dir / 'checkpoint-9'
     print(f'Loading from {best_ckpt_dir}')
     model.load_state_dict(torch.load(best_ckpt_dir / 'ckpt.pt'))
-    
-    # test_data = PairData(data_dir / 'test', 'test')
-    
-    # Get img paths
-    gen_dir = Path(f'../oracle-transcriber/transcription/results/{test_name}/test_latest/images')
-    print(f'Loading test data from {gen_dir}')
-    b_paths = [img for img in gen_dir.glob('*fake_B.png')]
-    a_paths = [img for img in gen_dir.glob('*real_A.png')]
-    assert len(a_paths) == 147 and len(b_paths) == 147
-    test_data = PairData(
-        None, 'test', img_paths=(a_paths, b_paths))
-    
-    result = evaluate(model, test_data, batch_size=256)
+
+
+def test(model, test_data, output_dir: Path, test_name: str):
+    random.seed(0)
+    torch.manual_seed(0)
+    result = evaluate(model, test_data, batch_size=512)
     
     test_dir = output_dir / 'test' / test_name
     test_dir.mkdir(exist_ok=True, parents=True)
@@ -152,24 +170,59 @@ def test(model, data_dir: Path, output_dir: Path, test_name: str):
     tcp /= len(result['labels'])
     tcp *= 100
     open(test_dir / 'tcp.txt', 'w').write(str(tcp))
-    print(f'TCP: {tcp:.2f}')
+    # print(f'TCP: {tcp:.2f}')
+    # print(f'loss: {result["loss"] * 100:.2f}')
+    # print(f'acc: {result["acc"] * 100:.2f}')
+    return tcp
 
 
-torch.manual_seed(0)
-data_dir = Path('../oracle-transcriber/transcription/datasets/220413/individuals_aligned')
-output_dir = Path('result/c_pair_2')
 
-print('Getting model')
-model = CPair().cuda()
+def get_transcription_tcp(test_name):
+    output_dir = Path('result/translation_classifier_tinycnn')
+    model = Classifier(2, input_filters=16).cuda()
+    load_best_ckpt(model, output_dir)
+    test_data = get_transcribed_data(test_name)
+    return test(model, test_data, output_dir, test_name=test_name)
 
-# train(model, data_dir, output_dir)
 
-# test_name = 'test'
-for test_name in [
-    '220413_replace0_mask1',
-    '220413_replace0.4_mask0',
-    '220413_replace0.8_mask0',
-    '220413_aligned'
-    ]:
-    print(test_name)
-    test(model, data_dir, output_dir, test_name=test_name)
+def test_rt7381(model, output_dir):
+    test_data = PairData(data_dir / 'dev', 'dev')
+    result = test(model, test_data, output_dir, 'rt7381')
+    print(result)
+
+
+if __name__ == '__main__':
+    torch.manual_seed(0)
+    data_dir = Path('../transcription/datasets/220413/individuals_aligned')
+    output_dir = Path('result/translation_classifier_cnn64')
+
+    # model = CPair().cuda()
+    for lr in [5e-4, 1e-3, 2e-3]:
+        print('Getting model')
+        model = Classifier(2, input_filters=64).cuda()
+        print('# params:', get_param_count(model))
+        this_output_dir = output_dir / str(lr)
+        # train(
+        #     model, 
+        #     data_dir, 
+        #     this_output_dir,
+        #     lr=lr,
+        #     num_epochs=6,
+        #     )
+        load_best_ckpt(model, this_output_dir)
+        test_rt7381(model, this_output_dir)
+    exit()
+    
+    tcp = {}
+    for test_name in [
+        '220413_replace0_mask1',
+        '220413_replace0.4_mask0',
+        '220413_replace0.8_mask0',
+        '220413_aligned',
+        '220413',
+        ]:
+        print(test_name)
+        test_data = get_transcribed_data(test_name)
+        tcp[test_name] = test(model, test_data, output_dir, test_name=test_name)
+
+    print(json.dumps(tcp, indent=2))

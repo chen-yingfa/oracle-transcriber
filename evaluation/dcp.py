@@ -1,21 +1,16 @@
 from pathlib import Path
 import json
-import math
+import random
 
 from tqdm import tqdm
-from PIL import Image
 import torch
 from torch.optim import Adam, lr_scheduler
-from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader
-from torch import nn
-from torchvision.models import mobilenet_v2
-from torchvision import transforms
 
 from utils import get_param_count
 from data import DomainData
-from model import CDomain
+from model import CDomain, Classifier
 
 
 def get_acc(labels, preds):
@@ -34,8 +29,8 @@ def evaluate(model, dataset: Dataset, batch_size: int=64):
     all_preds = []
     all_labels = []
     all_logits = []
-    print('*** Start Evaluate ***')
-    for step, batch in enumerate(tqdm(dataloader)):
+    # print('*** Start Evaluate ***')
+    for step, batch in enumerate(dataloader):
         img = batch['img'].cuda()
         label = batch['label'].cuda()
         logits = model(img)
@@ -60,26 +55,39 @@ def evaluate(model, dataset: Dataset, batch_size: int=64):
     return result
 
     
-def train(model, data_dir: Path, output_dir: Path, num_epochs: int=6, batch_size: int=512, lr: float=1e-4):
+def train(
+    model,
+    data_dir: Path, 
+    output_dir: Path, 
+    num_epochs: int=6, 
+    batch_size: int=512, 
+    start_lr: float=5e-4,
+    lr_decay: float=0.9):
     print('Getting data...', flush=True)
     train_data = DomainData(data_dir / 'train', 'train')
-    dev_data = DomainData(data_dir / 'val', 'dev')
+    dev_data = DomainData(data_dir / 'dev', 'dev')
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     
     # Optimizer and scheduler
     print('Preparing optimizer and scheduler...')
     num_opt_steps = len(train_dataloader)
-    optimizer = Adam(model.parameters(), lr=lr)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=num_opt_steps, gamma=0.1)
-    # optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+    optimizer = Adam(model.parameters(), lr=start_lr)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=num_opt_steps, gamma=lr_decay)
     
+    output_dir.mkdir(exist_ok=True, parents=True)
+    json.dump({
+        'num_epochs': num_epochs,
+        'batch_size': batch_size,
+        'start_lr': start_lr,
+        'lr_decay': lr_decay,
+    }, open(output_dir / 'train_args.json', 'w'), indent=2)
     
     print('*** Start Training ***')
+    print(f'output dir: {output_dir}')
     print(f'Train data: {len(train_data)}')
     print(f'Dev data: {len(dev_data)}')
     print(f'Batch size: {batch_size}')
-    print(f'Learning rate: {lr}')
+    print(f'Learning rate: {start_lr}')
     print(f'Num epochs: {num_epochs}')
     
     total_loss = 0
@@ -87,7 +95,7 @@ def train(model, data_dir: Path, output_dir: Path, num_epochs: int=6, batch_size
     
     for ep in range(num_epochs):
         model.train()
-        print(f'*** Epoch {ep+1} ***')
+        print(f'*** Training Epoch {ep} ***')
         for step, batch in enumerate(train_dataloader):
             img = batch['img'].cuda()
             label = batch['label'].cuda()
@@ -108,18 +116,21 @@ def train(model, data_dir: Path, output_dir: Path, num_epochs: int=6, batch_size
                 print(f'Step {step / num_opt_steps:.2f}: loss = {loss.item():.6f}, lr = {scheduler.get_lr()[0]}')
 
         # Validation
+        print('*** Start Evaluation ***')
         result = evaluate(model, dev_data, batch_size=batch_size)
-        print(result)
+        result['train_loss'] = total_loss / len(train_dataloader)
+        print({k: result[k] for k in ['loss', 'acc', 'preds']})
         
         # Save checkpoint
         ckpt_dir = output_dir / f'checkpoint-{ep}'
         ckpt_dir.mkdir(exist_ok=True, parents=True)
         torch.save(model.state_dict(), ckpt_dir / 'ckpt.pt')
         json.dump(result, open(ckpt_dir / 'result.json', 'w'))
+    print('*** Training Finished ***')
 
 
-def test(model, data_dir: Path, output_dir: Path, test_name: str):
-    print('Loading best model by dev loss')
+def load_best_ckpt(model, output_dir: Path):
+    # print('Loading best model by dev loss')
     min_loss = float('inf')
     best_ckpt_dir = None
     for ckpt_dir in output_dir.glob('checkpoint-*'):
@@ -131,16 +142,27 @@ def test(model, data_dir: Path, output_dir: Path, test_name: str):
     
     print(f'Loading from {best_ckpt_dir}')
     model.load_state_dict(torch.load(best_ckpt_dir / 'ckpt.pt'))
-    
-    # test_data = DomainData(data_dir / 'test', 'test')
-    
-    # Get img paths
-    gen_dir = Path(f'../oracle-transcriber/transcription/results/{test_name}/test_latest/images')
+
+
+def get_transcribed_data(test_name):
+    # Get from transcription result
+    gen_dir = Path(f'../transcription/results/{test_name}/test_latest/images')
     img_paths = [img for img in gen_dir.glob('*fake_B.png')]
     assert len(img_paths) == 147
     test_data = DomainData(
         None, 'test', img_paths=img_paths)
-    
+    return test_data
+
+
+def test_rt7381(model, output_dir):
+    test_data = DomainData(data_dir / 'dev', 'dev')
+    result = test(model, test_data, output_dir, 'rt7381')
+    print(result)
+
+
+def test(model, test_data: Path, output_dir: Path, test_name: str):
+    # test_data = DomainData(data_dir / 'test', 'test')
+    random.seed(0)
     result = evaluate(model, test_data, batch_size=256)
     
     test_dir = output_dir / 'test' / test_name
@@ -156,23 +178,45 @@ def test(model, data_dir: Path, output_dir: Path, test_name: str):
     dcp /= len(result['labels'])
     dcp *= 100
     open(test_dir / 'dcp.txt', 'w').write(str(dcp))
-    print(f'DCP: {dcp:.2f}')
+    # print(f'DCP: {dcp:.2f}')
+    # print(f'acc: {result["acc"]}')
+    # print(f'loss: {result["loss"]}')
+    return dcp
 
 
-torch.manual_seed(0)
-print('Getting model')
+def get_transcription_dcp(test_name):
+    # print('Getting model')
+    model = Classifier(1).cuda()
+    # print(f'# params: {get_param_count(model)}')
+    
+    output_dir = Path('result/domain_classifier_tinycnn_1')
+    load_best_ckpt(model, output_dir)
+    
+    test_data = get_transcribed_data(test_name)
+    return test(model, test_data, output_dir, test_name=test_name)
 
-data_dir = Path('../oracle-transcriber/transcription/datasets/220413/individuals')
-output_dir = Path('result/c_domain')
 
-model = CDomain().cuda()
+if __name__ == '__main__':
+    torch.manual_seed(0)
+    print('Getting model')
 
-# train(model, data_dir, output_dir)
-for test_name in [
-    '220413_replace0_mask1',
-    '220413_replace0.4_mask0',
-    '220413_replace0.8_mask0',
-    '220413_aligned'
-    ]:
-    print(test_name)
-    test(model, data_dir, output_dir, test_name=test_name)
+    data_dir = Path('../transcription/datasets/220413/individuals_aligned_90')
+    # output_dir = Path('result/domain_classifier_mobilenetv2')
+    output_dir = Path('result/domain_classifier_cnn')
+    # output_dir = Path('result/c_domain')
+
+    lr = 5e-4
+    lr_decay = 0.9
+
+    model = Classifier(1).cuda()
+    print(f'# params: {get_param_count(model)}')
+    train(
+        model, data_dir, output_dir,
+        num_epochs=6,
+        batch_size=512,
+        start_lr=lr,
+        lr_decay=lr_decay,
+    )
+    load_best_ckpt(model, output_dir)    
+    test_rt7381(model, output_dir)
+    
