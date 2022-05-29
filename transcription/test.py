@@ -1,5 +1,4 @@
-"""General-purpose test script for image-to-image translation.
-
+"""
 Once you have trained your model with train.py, you can use this script to test the model.
 It will load a saved model from '--checkpoints_dir' and save the results to '--results_dir'.
 
@@ -24,7 +23,7 @@ Example (You need to train models first or download pre-trained models from our 
 """
 import os
 from options.test_options import TestOptions
-from data import create_dataset
+from data import create_dataloader
 from models import create_model
 from util.visualizer import save_images
 from util import html
@@ -51,7 +50,7 @@ if __name__ == '__main__':
     opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
     opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
     opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
-    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    dataset = create_dataloader(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
 

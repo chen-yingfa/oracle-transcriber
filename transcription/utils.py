@@ -46,4 +46,3 @@ def concat_images(imgs: list, hor: bool=True):
         concatenated.paste(img, tuple(cur_pos))
         cur_pos[dim] += img.size[dim]
     return concatenated
-
