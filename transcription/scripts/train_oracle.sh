@@ -1,10 +1,10 @@
 set -ex
 
-da_replace_prob="0"
-da_hmask_prob="0.8"
+da_replace_prob="0.4"
+da_hmask_prob="0"
 da_smask_prob="0"
-name="220413_aligned_replace${da_replace_prob}_hmask${da_hmask_prob}_smask${da_smask_prob}"
-data_dir="./datasets/220413/individuals_aligned"
+name="rt7381_aligned_replace${da_replace_prob}_hmask${da_hmask_prob}_smask${da_smask_prob}"
+data_dir="./datasets/rt7381/individuals_aligned"
 
 out_dir="checkpoints/${name}"
 
