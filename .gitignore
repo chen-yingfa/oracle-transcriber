@@ -9,7 +9,14 @@ __pycache__
 data
 preprocessing/data
 preprocessing/handa-stats
-transcription/datasets
+
+transcription/datasets/edges2shoes
+transcription/datasets/7104
+transcription/datasets/oracle2transcription
+transcription/datasets/rubbing_531
+transcription/datasets/rubbing_531_white
+transcription/datasets/RT7381
+
 transcription/result
 transcription/results
 transcription/imgs
