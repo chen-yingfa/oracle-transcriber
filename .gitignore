@@ -6,7 +6,7 @@ __pycache__
 *.DS_Store
 *.png
 *.pyc
-data
+./data
 preprocessing/data
 preprocessing/handa-stats
 
