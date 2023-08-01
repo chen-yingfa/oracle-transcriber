@@ -3,6 +3,9 @@ import torch
 from pathlib import Path
 
 from options.test_options import TestOptions
+import torchvision.transforms.functional as TF
+import torch.nn.functional as F
+from torch import nn
 from models import create_model
 from data.base_dataset import get_transform, get_params
 import util
@@ -25,7 +28,7 @@ def get_opt():
     opt.input_nc = 1
     opt.load_size = 128
     opt.model = "pix2pix"
-    opt.name = "rt7381_aligned_L100_replace0.75_hmask0.25_smask0.25"
+    opt.name = "rt7381_aligned_replace0.4_hmask0_smask0"
     opt.norm = "batch"
     opt.netG = "unet_128"
     opt.no_flip = True
@@ -56,11 +59,36 @@ def preprocess_img(img: Image.Image) -> Image.Image:
         new_img = new_img.resize(shape)
         return new_img
 
-    img = pad_and_resize(img)
+    # img = pad_and_resize(img)
     transform_params = get_params(opt, img.size)
     transform = get_transform(opt, transform_params, grayscale=(opt.input_nc == 1))
     img = transform(img).unsqueeze(0)
     return img
+
+
+def binarize(img: Image.Image, threshold: float = 0.5):
+    kernel_size = 5
+    
+    # Convert the image to grayscale to get brightness values.
+    img_gray = img.convert('L')
+    pixels = img_gray.load()
+    img_tensor = TF.to_tensor(img_gray)
+    radius = kernel_size // 2
+    conv_kernel = torch.ones((1, 1, kernel_size, kernel_size)) / (kernel_size ** 2)
+
+    # Pad
+    x = F.pad(img_tensor, [radius] * 4, mode='replicate')
+    avg = F.conv2d(x, conv_kernel, stride=1)
+    idx = avg > threshold
+    temp = avg.flatten().tolist()
+    bin_tensor = torch.ones_like(img_tensor)
+    bin_tensor[avg > threshold] = 0
+    bin_img = TF.to_pil_image(bin_tensor)
+    return bin_img
+
+
+def postprocess_img(img: Image.Image) -> Image.Image:
+    return binarize(img, threshold=0.1)
 
 
 def transcribe(img: Image, model) -> Image:
@@ -69,6 +97,7 @@ def transcribe(img: Image, model) -> Image:
         out = model.netG(img)
         out = util.util.tensor2im(out)
         img = Image.fromarray(out)
+        img = postprocess_img(img)
         return img
 
 
@@ -91,11 +120,10 @@ def main():
     # w, h = img.size
     # img = img.crop((0, 0, w//2, h))
     # img.save('orig.png')
-    src_dir = Path("../../data/H32384_detection_result")
-    dst_dir = Path("../../data/H32384_detection_result_transcribed")
+    src_dir = Path("../../H32384_case_data/cropped_boxes")
+    dst_dir = Path("../H32384_transcription")
     dst_dir.mkdir(exist_ok=True, parents=True)
     img_files = sorted(src_dir.glob("*.jpg"))
-    print(img_files)
     for img_file in img_files:
         img = Image.open(img_file)
         print("Transcribing:", img_file.name)

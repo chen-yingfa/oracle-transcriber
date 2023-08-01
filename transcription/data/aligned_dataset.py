@@ -39,9 +39,9 @@ class AlignedDataset(BaseDataset):
             
             self.transform_random_erasing = transforms.RandomErasing(p=self.smask_prob, value='random')
         
-            # Heuristically generated mask files
-            self.hmask_dir = '../data/mask'
-            self.hmask_files = os.listdir(self.hmask_dir)
+            # # Heuristically generated mask files
+            # self.hmask_dir = '../data/mask'
+            # self.hmask_files = os.listdir(self.hmask_dir)
         
     def get_AB_paths(self, data_dir, max_dataset_size):
         # Load all image paths in a list of path pairs.
@@ -120,8 +120,7 @@ class AlignedDataset(BaseDataset):
         path_a, path_b = self.AB_paths[index % len(self.AB_paths)]
         A = Image.open(path_a).convert('L')
         
-        # if self.phase == 'train':
-            
+        if self.phase == 'train':
         #     # Data augmentation with Heuristically generated mask method
         #     if random.random() < self.hmask_prob:
         #         A = self.apply_hmask(A)
@@ -130,18 +129,14 @@ class AlignedDataset(BaseDataset):
         #     if random.random() < self.replace_prob:
         #         path_b = self.get_replace_path(path_b)
                 
-        #     # Data augmentation with simple mask
-        #     A = self.apply_smask(A)
-                
-            
+            # Data augmentation with simple mask
+            A = self.apply_smask(A)
         B = Image.open(path_b).convert('L')
-        
 
         # apply the same transform to both A and B
         transform_params = get_params(self.opt, A.size)
         A_transform = get_transform(self.opt, transform_params, grayscale=(self.input_nc == 1))
         B_transform = get_transform(self.opt, transform_params, grayscale=(self.output_nc == 1))
-
         A = A_transform(A)
         B = B_transform(B)
 

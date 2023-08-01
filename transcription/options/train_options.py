@@ -38,6 +38,6 @@ class TrainOptions(BaseOptions):
 
         parser.add_argument('--da_replace_prob', type=float, default=0.0, help='Probability of using "Replace" data augmentation method.')
         parser.add_argument('--da_hmask_prob', type=float, default=0.0, help='Probability of using "H-Mask" data augmentation method.')
-        parser.add_argument('--da_smask_prob', type=float, default=0.0, help='Probability of using "S-Mask" data augmentation method.')
+        parser.add_argument('--da_smask_prob', type=float, default=0.5, help='Probability of using "S-Mask" data augmentation method.')
         self.isTrain = True
         return parser
