@@ -2,7 +2,7 @@ set -ex
 
 da_replace_prob="0"
 da_hmask_prob="0"
-da_smask_prob="0.5"
+da_smask_prob="0"
 name="rt7381_aligned_replace${da_replace_prob}_hmask${da_hmask_prob}_smask${da_smask_prob}"
 data_dir="./datasets/rt7381/individuals_96_aligned"
 
@@ -26,7 +26,7 @@ cmd+=" --crop_size 128"
 cmd+=" --load_size 128"
 cmd+=" --input_nc 1"
 cmd+=" --output_nc 1"
-cmd+=" --batch_size 64"
+cmd+=" --batch_size 128"
 cmd+=" --n_epochs 100"
 cmd+=" --n_epochs_decay 100"
 cmd+=" --save_epoch_freq 20"

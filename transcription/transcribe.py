@@ -28,7 +28,7 @@ def get_opt():
     opt.input_nc = 1
     opt.load_size = 128
     opt.model = "pix2pix"
-    opt.name = "rt7381_aligned_replace0.4_hmask0_smask0"
+    opt.name = "rt7381_aligned_replace0_hmask0_smask0"
     opt.norm = "batch"
     opt.netG = "unet_128"
     opt.no_flip = True

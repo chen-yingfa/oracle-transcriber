@@ -1,5 +1,8 @@
 # OracleTranscriber
 
+## 模型
+
+是一个 41.823 M 参数的 U-Net。判别器是一个 2.765 M 参数的 CNN。
 
 ## 数据
 
@@ -11,7 +14,11 @@
 
 ### 训练
 
-不知道
+直接跑
+
+```bash
+./scripts/train_oracle.sh
+```
 
 ### 生成
 

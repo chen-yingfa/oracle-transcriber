@@ -37,7 +37,8 @@ class AlignedDataset(BaseDataset):
             self.hmask_prob = opt.da_hmask_prob
             self.smask_prob = opt.da_smask_prob
             
-            self.transform_random_erasing = transforms.RandomErasing(p=self.smask_prob, value='random')
+            self.transform_random_erasing = transforms.RandomErasing(
+                p=self.smask_prob, value='random')
         
             # # Heuristically generated mask files
             # self.hmask_dir = '../data/mask'
@@ -65,6 +66,7 @@ class AlignedDataset(BaseDataset):
         return glyph_to_indices
         
     def apply_hmask(self, img):
+        raise FileNotFoundError('Heuristically generated masks are not found')
         # Apply random mask
         # img.save('orig.png')
         arr = np.array(img.getdata())
@@ -121,14 +123,14 @@ class AlignedDataset(BaseDataset):
         A = Image.open(path_a).convert('L')
         
         if self.phase == 'train':
-        #     # Data augmentation with Heuristically generated mask method
-        #     if random.random() < self.hmask_prob:
-        #         A = self.apply_hmask(A)
+            # Data augmentation with Heuristically generated mask method
+            if random.random() < self.hmask_prob:
+                A = self.apply_hmask(A)
             
-        #     # Data augmentation with Replace method
-        #     if random.random() < self.replace_prob:
-        #         path_b = self.get_replace_path(path_b)
-                
+            # Data augmentation with Replace method
+            if random.random() < self.replace_prob:
+                path_b = self.get_replace_path(path_b)
+
             # Data augmentation with simple mask
             A = self.apply_smask(A)
         B = Image.open(path_b).convert('L')
