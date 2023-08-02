@@ -34,7 +34,7 @@
 
 ### 生成
 
-用 `transcribe.py`，直接在 `get_opt` 函数里面手动设置参数。
+用 `transcribe.py`，直接在 `get_opt()` 函数里面手动设置参数。
 
 主要需要关注的参数是 --checkpoint_dir 和 --name，用来指定训练好的 checkpoint，然后在 `main` 函数里面设置 `src_dir` 和 `dst_dir` 来设置输入和输出的图片。
 
